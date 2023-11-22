@@ -1,10 +1,10 @@
 unit MiniREST.Indy;
 
 interface
-
+{$HINTS OFF}
 uses Classes, SysUtils, JsonDataObjects, {$IF DEFINED(VER310) OR DEFINED(VER290)} JSON {$ELSE} DBXJSON {$IFEND}, MiniREST.Intf, MiniREST.Common,
   MiniREST.Server.Base, IdContext, IdCustomHTTPServer, IdHTTPServer, IdGlobal,
-  IdGlobalProtocols, IdSchedulerOfThreadPool;
+  IdGlobalProtocols, IdSchedulerOfThreadPool, IdSSL;
 
 type
   TMiniRESTServerIndy = class(TMiniRESTServerBase)
@@ -24,6 +24,7 @@ type
     function Stop: Boolean; override;
     function GetPort: Integer; override;
     procedure SetPort(APort: Integer); override;
+    procedure OnQuerySSLPort(APort: TIdPort; var AUseSSL: Boolean);
   end;
 
   TMiniRESTActionContextIndy = class(TInterfacedObject, IMiniRESTActionContext)
@@ -71,11 +72,13 @@ type
 
 implementation
 
-uses MiniREST.Util;
+uses MiniREST.Util, IdSSLOpenSSL;
 
 { TMiniRESTServerIndy }
 
 constructor TMiniRESTServerIndy.Create;
+var
+  LIOHandleSSL: TIdServerIOHandlerSSLOpenSSL;
 begin
   inherited;
   FHttpServer := TIdHTTPServer.Create(nil);
@@ -89,6 +92,19 @@ begin
   FHttpServer.OnCommandError := OnCommandError;
   FHttpServer.OnCommandGet := FindController;
   FHttpServer.OnCommandOther := FindController;
+
+  LIOHandleSSL := TIdServerIOHandlerSSLOpenSSL.Create(FHttpServer);
+  LIOHandleSSL.SSLOptions.CertFile := 'moj_cert.pem';
+  LIOHandleSSL.SSLOptions.KeyFile := 'moj_klucz.pem';
+  LIOHandleSSL.SSLOptions.SSLVersions := [sslvTLSv1, sslvTLSv1_1, sslvTLSv1_2];
+
+  FHttpServer.IOHandler := LIOHandleSSL;
+  FHttpServer.OnQuerySSLPort := OnQuerySSLPort;
+end;
+
+procedure TMiniRESTServerIndy.OnQuerySSLPort(APort: TIdPort; var AUseSSL: Boolean);
+begin
+  AUseSSL := True;
 end;
 
 destructor TMiniRESTServerIndy.Destroy;
