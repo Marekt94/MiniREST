@@ -37,7 +37,7 @@ type
   public
     constructor Create(const AName: string; const AValue : string); reintroduce;
     destructor Destroy; override;
-    function ToString : string;
+    function ToString : string; override;
 
     property Expires: TDateTime read FExpires write FExpires;
     property Domain: string read FDomain write FDomain;
@@ -63,8 +63,6 @@ const
 { TMiniRESTCookie }
 
 function TMiniRESTCookie.ToString: string;
-var
-  FFieldList : TStrings;
 begin
   FFieldList.Clear;
 
@@ -75,6 +73,8 @@ begin
   AddFieldIfNotEmpty('ip', FIP);             //do not localize
   AddFieldIfNotEmpty('path', FPath);         //do not localize
   AddSecure;
+
+  result := FFieldList.DelimitedText;
 end;
 
 { TMiniRESTCookie }

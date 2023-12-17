@@ -47,6 +47,8 @@ type
   { TODO : Remover dependência Indy }
   IMiniRESTActionContext = interface
   ['{1BF3D3A8-014F-4C84-861D-E9C94D3C1439}']
+    procedure SetCookie(const ACookie : TMiniRESTCookie);
+    function GetCookieValue(const AName : string) : string;
     function GetActionInfo : IMiniRESTActionInfo;
     procedure SetActionInfo(AActionInfo : IMiniRESTActionInfo);
     function GetRequestContentAsString : string;

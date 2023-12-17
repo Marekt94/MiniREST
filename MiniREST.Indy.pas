@@ -39,6 +39,8 @@ type
     ARequestInfo : TIdHTTPRequestInfo; AResponseInfo : TIdHTTPResponseInfo) : IMiniRESTActionContext;
     constructor Create(AActionInfo : IMiniRESTActionInfo; AIndyContext : TIdContext;
     ARequestInfo : TIdHTTPRequestInfo; AResponseInfo : TIdHTTPResponseInfo);
+    procedure SetCookie(const ACookie : TMiniRESTCookie);
+    function GetCookieValue(const AName : string) : string;
     function GetActionInfo: IMiniRESTActionInfo;
     procedure SetActionInfo(AActionInfo: IMiniRESTActionInfo);
     function GetIndyContext: TIdContext;
@@ -71,7 +73,7 @@ type
 
 implementation
 
-uses MiniREST.Util;
+uses MiniREST.Util, System.StrUtils;
 
 { TMiniRESTServerIndy }
 
@@ -208,6 +210,20 @@ begin
   end;
 end;
 
+function TMiniRESTActionContextIndy.GetCookieValue(const AName: string): string;
+const
+  cCookie = 'Cookie';
+var
+  LCookie : string;
+  LCookieValue : string;
+  LArray : TArray<string>;
+begin
+  LCookie := GetHeader(cCookie);
+  LArray := SplitString(LCookie, '=');
+  if Length(LArray) = 2 then
+    Result := LArray[1];
+end;
+
 function TMiniRESTActionContextIndy.GetHeader(AName: string): string;
 begin
   Result := FRequestInfo.RawHeaders.Values[AName];
@@ -317,6 +333,13 @@ procedure TMiniRESTActionContextIndy.SetActionInfo(
   AActionInfo: IMiniRESTActionInfo);
 begin
   FActionInfo := AActionInfo;
+end;
+
+procedure TMiniRESTActionContextIndy.SetCookie(const ACookie: TMiniRESTCookie);
+const
+  cSetCookie = 'Set-Cookie';
+begin
+  SetHeader(cSetCookie, ACookie.ToString);
 end;
 
 procedure TMiniRESTActionContextIndy.SetHeader(AName, AValue: string);
