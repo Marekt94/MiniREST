@@ -219,7 +219,8 @@ var
   LArray : TArray<string>;
 begin
   LCookie := GetHeader(cCookie);
-  LArray := SplitString(LCookie, '=');
+  LCookie := StringReplace(LCookie, '=', ';',[]);
+  LArray := SplitString(LCookie, ';');
   if Length(LArray) = 2 then
     Result := LArray[1];
 end;
