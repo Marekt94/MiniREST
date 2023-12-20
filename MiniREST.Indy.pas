@@ -215,7 +215,6 @@ const
   cCookie = 'Cookie';
 var
   LCookie : string;
-  LCookieValue : string;
   LArray : TArray<string>;
 begin
   LCookie := GetHeader(cCookie);
