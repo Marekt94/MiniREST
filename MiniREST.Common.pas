@@ -27,18 +27,11 @@ type
     FSecure : boolean;
     FIP : string;
     FSameSite : TMiniRESTSameSite;
-
-    FFieldList : TStrings;
-
-    procedure AddFieldIfNotEmpty(AFieldName : string; const AFieldValue : string); overload;
-    procedure AddFieldIfNotEmpty(AFieldName : string; const AFieldValue : TDateTime); overload;
-    procedure AddFieldIfNotEmpty(const AFieldValue : TMiniRESTSameSite); overload;
-    procedure AddSecure;
   public
     constructor Create(const AName: string; const AValue : string); reintroduce;
-    destructor Destroy; override;
-    function ToString : string; override;
 
+    property Name: string read FName;
+    property Value: string read FValue;
     property Expires: TDateTime read FExpires write FExpires;
     property Domain: string read FDomain write FDomain;
     property Path: string read FPath write FPath;
@@ -57,71 +50,14 @@ implementation
 uses
   System.SysUtils;
 
-const
-  cCookieFieldWithValue = '%s=%s';
-
 { TMiniRESTCookie }
 
-function TMiniRESTCookie.ToString: string;
-begin
-  FFieldList.Clear;
-
-  AddFieldIfNotEmpty(FName, FValue);
-  AddFieldIfNotEmpty(FSameSite);
-  AddFieldIfNotEmpty('expires', FExpires);   //do not localize
-  AddFieldIfNotEmpty('domain', FDomain);     //do not localize
-  AddFieldIfNotEmpty('ip', FIP);             //do not localize
-  AddFieldIfNotEmpty('path', FPath);         //do not localize
-  AddSecure;
-
-  result := FFieldList.DelimitedText;
-end;
-
-{ TMiniRESTCookie }
-
-procedure TMiniRESTCookie.AddFieldIfNotEmpty(AFieldName: string;
-  const AFieldValue: string);
-begin
-  if Trim(AFieldValue) <> '' then
-    FFieldList.Add(Format(cCookieFieldWithValue, [AFieldName, AFieldValue]));
-end;
-
-procedure TMiniRESTCookie.AddFieldIfNotEmpty(AFieldName: string;
-  const AFieldValue: TDateTime);
-begin
-
-end;
-
-procedure TMiniRESTCookie.AddFieldIfNotEmpty(
-  const AFieldValue: TMiniRESTSameSite);
-const
-  cSameSite = 'samesite';
-begin
-  case FSameSite of
-    ssLax:    AddFieldIfNotEmpty(cSameSite, 'Lax');     //do not localize
-    ssStrict: AddFieldIfNotEmpty(cSameSite, 'Strict');  //do not localize
-  end;
-end;
-
-procedure TMiniRESTCookie.AddSecure;
-begin
-  if FSecure then
-    FFieldList.Add('secure')  //do not localize
-end;
 
 constructor TMiniRESTCookie.Create(const AName, AValue: string);
 begin
   inherited Create;
-  FFieldList := TStringList.Create;
-  FFieldList.Delimiter := ',';
   FName := AName;
   FValue := AValue;
-end;
-
-destructor TMiniRESTCookie.Destroy;
-begin
-  FFieldList.Free;
-  inherited;
 end;
 
 end.

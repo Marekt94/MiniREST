@@ -40,7 +40,7 @@ type
     constructor Create(AActionInfo : IMiniRESTActionInfo; AIndyContext : TIdContext;
     ARequestInfo : TIdHTTPRequestInfo; AResponseInfo : TIdHTTPResponseInfo);
     procedure SetCookie(const ACookie : TMiniRESTCookie);
-    function GetCookieValue(const AName : string) : string;
+    function GetCookieValue(const AName : string; const ADomain : string = '') : string;
     function GetActionInfo: IMiniRESTActionInfo;
     procedure SetActionInfo(AActionInfo: IMiniRESTActionInfo);
     function GetIndyContext: TIdContext;
@@ -73,7 +73,7 @@ type
 
 implementation
 
-uses MiniREST.Util, System.StrUtils;
+uses MiniREST.Util, System.StrUtils, IdCookie;
 
 { TMiniRESTServerIndy }
 
@@ -210,18 +210,14 @@ begin
   end;
 end;
 
-function TMiniRESTActionContextIndy.GetCookieValue(const AName: string): string;
-const
-  cCookie = 'Cookie';
+function TMiniRESTActionContextIndy.GetCookieValue(const AName : string; const ADomain : string = '') : string;
 var
-  LCookie : string;
-  LArray : TArray<string>;
+  LCookie : TIdCookie;
 begin
-  LCookie := GetHeader(cCookie);
-  LCookie := StringReplace(LCookie, '=', ';',[]);
-  LArray := SplitString(LCookie, ';');
-  if Length(LArray) = 2 then
-    Result := LArray[1];
+  Result := '';
+  LCookie := FRequestInfo.Cookies.Cookie[AName, ADomain];
+  if Assigned(LCookie) then
+    Result := LCookie.Value;
 end;
 
 function TMiniRESTActionContextIndy.GetHeader(AName: string): string;
@@ -336,10 +332,19 @@ begin
 end;
 
 procedure TMiniRESTActionContextIndy.SetCookie(const ACookie: TMiniRESTCookie);
-const
-  cSetCookie = 'Set-Cookie';
+var
+  LCookie : TIdCookie;
 begin
-  SetHeader(cSetCookie, ACookie.ToString);
+  LCookie := FResponseInfo.Cookies.Add;
+  LCookie.CookieName := ACookie.Name;
+  LCookie.Value      := ACookie.Value;
+  LCookie.Expires    := ACookie.Expires;
+  if Trim(ACookie.Domain) <> '' then
+    LCookie.Domain   := ACookie.Domain
+  else
+    LCookie.Domain   := ACookie.IP;
+  LCookie.Path       := ACookie.Path;
+  LCookie.Secure     := ACookie.Secure;
 end;
 
 procedure TMiniRESTActionContextIndy.SetHeader(AName, AValue: string);
