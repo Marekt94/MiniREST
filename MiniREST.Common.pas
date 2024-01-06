@@ -25,7 +25,6 @@ type
     FDomain : string;
     FPath : string;
     FSecure : boolean;
-    FIP : string;
     FSameSite : TMiniRESTSameSite;
   public
     constructor Create(const AName: string; const AValue : string); reintroduce;
@@ -36,7 +35,6 @@ type
     property Domain: string read FDomain write FDomain;
     property Path: string read FPath write FPath;
     property Secure: boolean read FSecure write FSecure;
-    property IP: string read FIP write FIP;
     property Samesite: TMiniRESTSameSite read FSamesite write FSamesite;
   end;
 

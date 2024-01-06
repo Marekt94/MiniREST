@@ -49,6 +49,7 @@ type
   ['{1BF3D3A8-014F-4C84-861D-E9C94D3C1439}']
     procedure SetCookie(const ACookie : TMiniRESTCookie);
     function GetCookieValue(const AName : string; const ADomain : string = '') : string;
+    function GetCookie(const AName : string) : TMiniRESTCookie;
     function GetActionInfo : IMiniRESTActionInfo;
     procedure SetActionInfo(AActionInfo : IMiniRESTActionInfo);
     function GetRequestContentAsString : string;

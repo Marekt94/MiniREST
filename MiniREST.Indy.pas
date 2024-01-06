@@ -40,6 +40,7 @@ type
     constructor Create(AActionInfo : IMiniRESTActionInfo; AIndyContext : TIdContext;
     ARequestInfo : TIdHTTPRequestInfo; AResponseInfo : TIdHTTPResponseInfo);
     procedure SetCookie(const ACookie : TMiniRESTCookie);
+    function GetCookie(const AName : string) : TMiniRESTCookie;
     function GetCookieValue(const AName : string; const ADomain : string = '') : string;
     function GetActionInfo: IMiniRESTActionInfo;
     procedure SetActionInfo(AActionInfo: IMiniRESTActionInfo);
@@ -183,7 +184,7 @@ begin
   FActionInfo := AActionInfo;
   FIndyContext := AIndyContext;
   FRequestInfo := ARequestInfo;
-  FResponseInfo := AResponseInfo;  
+  FResponseInfo := AResponseInfo;
 end;
 
 function TMiniRESTActionContextIndy.GetActionInfo: IMiniRESTActionInfo;
@@ -208,6 +209,26 @@ begin
     else
       raise Exception.Create('Não implementado');
   end;
+end;
+
+function TMiniRESTActionContextIndy.GetCookie(
+  const AName: string): TMiniRESTCookie;
+var
+  LCookieIndex : Integer;
+  LCookie : TIdCookie;
+begin
+  LCookieIndex := FRequestInfo.Cookies.GetCookieIndex(AName);
+  if LCookieIndex <> -1 then
+  begin
+    LCookie := FRequestInfo.Cookies[LCookieIndex];
+    Result := TMiniRESTCookie.Create(LCookie.CookieName, LCookie.Value);
+    Result.Expires := LCookie.Expires;
+    Result.Domain  := LCookie.Domain;
+    Result.Path    := LCookie.Path;
+    Result.Secure  := LCookie.Secure;
+  end
+  else
+    Result := nil;
 end;
 
 function TMiniRESTActionContextIndy.GetCookieValue(const AName : string; const ADomain : string = '') : string;
@@ -308,7 +329,7 @@ begin
 end;
 
 procedure TMiniRESTActionContextIndy.ServeFile(AFilePath: string);
-var 
+var
   LFileName : string;
 begin
   LFileName := ProcessPath(ExtractFilePath(ParamStr(0)), AFilePath);
@@ -333,16 +354,18 @@ end;
 
 procedure TMiniRESTActionContextIndy.SetCookie(const ACookie: TMiniRESTCookie);
 var
+  LCookieIndex : Integer;
   LCookie : TIdCookie;
 begin
-  LCookie := FResponseInfo.Cookies.Add;
+  LCookieIndex := FResponseInfo.Cookies.GetCookieIndex(ACookie.Name);
+  if LCookieIndex = -1 then
+    LCookie := FResponseInfo.Cookies.Add
+  else
+    LCookie := FResponseInfo.Cookies[LCookieIndex];
   LCookie.CookieName := ACookie.Name;
   LCookie.Value      := ACookie.Value;
   LCookie.Expires    := ACookie.Expires;
-  if Trim(ACookie.Domain) <> '' then
-    LCookie.Domain   := ACookie.Domain
-  else
-    LCookie.Domain   := ACookie.IP;
+  LCookie.Domain     := ACookie.Domain;
   LCookie.Path       := ACookie.Path;
   LCookie.Secure     := ACookie.Secure;
 end;
@@ -375,7 +398,7 @@ end;
 
 procedure TMiniRESTActionContextIndy.SetResponseStream(AStream: TStream);
 begin
-  FResponseInfo.ContentStream := AStream;  
+  FResponseInfo.ContentStream := AStream;
 end;
 
 end.
