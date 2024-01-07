@@ -4,12 +4,11 @@ interface
 {$HINTS OFF}
 uses Classes, SysUtils, JsonDataObjects, {$IF DEFINED(VER310) OR DEFINED(VER290)} JSON {$ELSE} DBXJSON {$IFEND}, MiniREST.Intf, MiniREST.Common,
   MiniREST.Server.Base, IdContext, IdCustomHTTPServer, IdHTTPServer, IdGlobal,
-  IdGlobalProtocols, IdSchedulerOfThreadPool, IdSSL;
+  IdGlobalProtocols, IdSchedulerOfThreadPool;
 
 type
   TMiniRESTServerIndy = class(TMiniRESTServerBase)
   private
-    FHttpServer : TIdHTTPServer;
     FThreadPool : TIdSchedulerOfThreadPool;
     procedure FindController(AContext: TIdContext; ARequestInfo: TIdHTTPRequestInfo;
       AResponseInfo: TIdHTTPResponseInfo); overload;
@@ -17,6 +16,8 @@ type
     procedure OnCommandError(AContext: TIdContext;
   ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo;
   AException: Exception);
+  protected
+    FHttpServer : TIdHTTPServer;
   public
     constructor Create;
     destructor Destroy; override;
@@ -24,7 +25,6 @@ type
     function Stop: Boolean; override;
     function GetPort: Integer; override;
     procedure SetPort(APort: Integer); override;
-    procedure OnQuerySSLPort(APort: TIdPort; var AUseSSL: Boolean);
   end;
 
   TMiniRESTActionContextIndy = class(TInterfacedObject, IMiniRESTActionContext)
@@ -72,13 +72,11 @@ type
 
 implementation
 
-uses MiniREST.Util, IdSSLOpenSSL;
+uses MiniREST.Util;
 
 { TMiniRESTServerIndy }
 
 constructor TMiniRESTServerIndy.Create;
-var
-  LIOHandleSSL: TIdServerIOHandlerSSLOpenSSL;
 begin
   inherited;
   FHttpServer := TIdHTTPServer.Create(nil);
@@ -92,19 +90,6 @@ begin
   FHttpServer.OnCommandError := OnCommandError;
   FHttpServer.OnCommandGet := FindController;
   FHttpServer.OnCommandOther := FindController;
-
-  LIOHandleSSL := TIdServerIOHandlerSSLOpenSSL.Create(FHttpServer);
-  LIOHandleSSL.SSLOptions.CertFile := 'moj_cert.pem';
-  LIOHandleSSL.SSLOptions.KeyFile := 'moj_klucz.pem';
-  LIOHandleSSL.SSLOptions.SSLVersions := [sslvTLSv1, sslvTLSv1_1, sslvTLSv1_2];
-
-  FHttpServer.IOHandler := LIOHandleSSL;
-  FHttpServer.OnQuerySSLPort := OnQuerySSLPort;
-end;
-
-procedure TMiniRESTServerIndy.OnQuerySSLPort(APort: TIdPort; var AUseSSL: Boolean);
-begin
-  AUseSSL := True;
 end;
 
 destructor TMiniRESTServerIndy.Destroy;
