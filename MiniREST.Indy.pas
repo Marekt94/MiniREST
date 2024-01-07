@@ -1,7 +1,7 @@
 unit MiniREST.Indy;
 
 interface
-
+{$HINTS OFF}
 uses Classes, SysUtils, JsonDataObjects, {$IF DEFINED(VER310) OR DEFINED(VER290)} JSON {$ELSE} DBXJSON {$IFEND}, MiniREST.Intf, MiniREST.Common,
   MiniREST.Server.Base, IdContext, IdCustomHTTPServer, IdHTTPServer, IdGlobal,
   IdGlobalProtocols, IdSchedulerOfThreadPool;
@@ -9,7 +9,6 @@ uses Classes, SysUtils, JsonDataObjects, {$IF DEFINED(VER310) OR DEFINED(VER290)
 type
   TMiniRESTServerIndy = class(TMiniRESTServerBase)
   private
-    FHttpServer : TIdHTTPServer;
     FThreadPool : TIdSchedulerOfThreadPool;
     procedure FindController(AContext: TIdContext; ARequestInfo: TIdHTTPRequestInfo;
       AResponseInfo: TIdHTTPResponseInfo); overload;
@@ -17,6 +16,8 @@ type
     procedure OnCommandError(AContext: TIdContext;
   ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo;
   AException: Exception);
+  protected
+    FHttpServer : TIdHTTPServer;
   public
     constructor Create;
     destructor Destroy; override;
