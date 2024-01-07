@@ -3,42 +3,70 @@ unit MiniREST.Indy.WithSSL;
 interface
 
 uses
-  MiniREST.Indy, IdGlobal;
+  MiniREST.Indy, IdGlobal, MiniREST.Server.Intf, IdSSLOpenSSL;
 
 type
-  TMiniRESTServerIndyWithSSL = class(TMiniRESTServerIndy)
+  TMiniRESTServerIndyWithSSL = class(TMiniRESTServerIndy, ISSL)
+  strict private
+    FIOHandleSSL: TIdServerIOHandlerSSLOpenSSL;
+    FSecured : boolean;
+    FCertPath : string;
+    FKeyPath : string;
   public
-    constructor Create(const ACertPath : string; const AKeyPath : string); reintroduce;
+    procedure SetCertPath(const ACertPath : string);
+    procedure SetKeyPath(const AKeyPAth : string);
+    function GetSecured : boolean;
+    procedure SetSecured(const ASecured : boolean);
     procedure OnQuerySSLPort(APort: TIdPort; var AUseSSL: Boolean);
   end;
 
 implementation
 
-uses
-  IdSSLOpenSSL;
-
 { TMiniRESTServerIndyWithSSL }
 
-constructor TMiniRESTServerIndyWithSSL.Create(const ACertPath,
-  AKeyPath: string);
-var
-  LIOHandleSSL: TIdServerIOHandlerSSLOpenSSL;
+function TMiniRESTServerIndyWithSSL.GetSecured: boolean;
 begin
-  inherited Create;
-
-  LIOHandleSSL := TIdServerIOHandlerSSLOpenSSL.Create(FHttpServer);
-  LIOHandleSSL.SSLOptions.CertFile := ACertPath;
-  LIOHandleSSL.SSLOptions.KeyFile := AKeyPath;
-  LIOHandleSSL.SSLOptions.SSLVersions := [sslvTLSv1, sslvTLSv1_1, sslvTLSv1_2];
-
-  FHttpServer.IOHandler := LIOHandleSSL;
-  FHttpServer.OnQuerySSLPort := OnQuerySSLPort;
+  Result := FSecured;
 end;
 
 procedure TMiniRESTServerIndyWithSSL.OnQuerySSLPort(APort: TIdPort;
   var AUseSSL: Boolean);
 begin
-  AUseSSL := true;
+  AUseSSL := FSecured;
+end;
+
+procedure TMiniRESTServerIndyWithSSL.SetCertPath(const ACertPath: string);
+begin
+  FCertPath := ACertPath;
+  if Assigned(FIOHandleSSL) then
+    FIOHandleSSL.SSLOptions.CertFile := FCertPath;
+end;
+
+procedure TMiniRESTServerIndyWithSSL.SetKeyPath(const AKeyPAth: string);
+begin
+  FKeyPath := AKeyPAth;
+  if Assigned(FIOHandleSSL) then
+    FIOHandleSSL.SSLOptions.KeyFile := FKeyPath;
+end;
+
+procedure TMiniRESTServerIndyWithSSL.SetSecured(const ASecured: boolean);
+begin
+  FSecured := ASecured;
+  if FSecured then
+  begin
+    FIOHandleSSL := TIdServerIOHandlerSSLOpenSSL.Create(FHttpServer);
+    FIOHandleSSL.SSLOptions.CertFile := FCertPath;
+    FIOHandleSSL.SSLOptions.KeyFile := FKeyPath;
+    FIOHandleSSL.SSLOptions.SSLVersions := [sslvTLSv1, sslvTLSv1_1, sslvTLSv1_2];
+
+    FHttpServer.IOHandler := FIOHandleSSL;
+    FHttpServer.OnQuerySSLPort := OnQuerySSLPort;
+  end
+  else
+  begin
+    FIOHandleSSL.Free;
+    FHttpServer.IOHandler := nil;
+  end;
 end;
 
 end.
