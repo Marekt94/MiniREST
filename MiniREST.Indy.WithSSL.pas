@@ -3,12 +3,12 @@ unit MiniREST.Indy.WithSSL;
 interface
 
 uses
-  MiniREST.Indy, IdGlobal, MiniREST.Server.Intf, IdSSLOpenSSL;
+  MiniREST.Indy, IdGlobal, MiniREST.Server.Intf, IdOpenSSLIOHandlerServer, IdOpenSSLVersion;
 
 type
   TMiniRESTServerIndyWithSSL = class(TMiniRESTServerIndy, ISSL)
   strict private
-    FIOHandleSSL: TIdServerIOHandlerSSLOpenSSL;
+    FIOHandleSSL: TIdOpenSSLIOHandlerServer;
     FSecured : boolean;
     FCertPath : string;
     FKeyPath : string;
@@ -39,14 +39,14 @@ procedure TMiniRESTServerIndyWithSSL.SetCertPath(const ACertPath: string);
 begin
   FCertPath := ACertPath;
   if Assigned(FIOHandleSSL) then
-    FIOHandleSSL.SSLOptions.CertFile := FCertPath;
+    FIOHandleSSL.Options.CertFile := FCertPath;
 end;
 
 procedure TMiniRESTServerIndyWithSSL.SetKeyPath(const AKeyPAth: string);
 begin
   FKeyPath := AKeyPAth;
   if Assigned(FIOHandleSSL) then
-    FIOHandleSSL.SSLOptions.KeyFile := FKeyPath;
+    FIOHandleSSL.Options.CertKey := FKeyPath;
 end;
 
 procedure TMiniRESTServerIndyWithSSL.SetSecured(const ASecured: boolean);
@@ -54,10 +54,11 @@ begin
   FSecured := ASecured;
   if FSecured then
   begin
-    FIOHandleSSL := TIdServerIOHandlerSSLOpenSSL.Create(FHttpServer);
-    FIOHandleSSL.SSLOptions.CertFile := FCertPath;
-    FIOHandleSSL.SSLOptions.KeyFile := FKeyPath;
-    FIOHandleSSL.SSLOptions.SSLVersions := [sslvTLSv1, sslvTLSv1_1, sslvTLSv1_2];
+    FIOHandleSSL := TIdOpenSSLIOHandlerServer.Create(FHttpServer);
+    FIOHandleSSL.Options.CertFile := FCertPath;
+    FIOHandleSSL.Options.CertKey := FKeyPath;
+    FIOHandleSSL.Options.TLSVersionMinimum := TIdOpenSSLVersion.TLSv1_2;
+    FIOHandleSSL.Options.TLSVersionMaximum := TIdOpenSSLVersion.TLSv1_3;
 
     FHttpServer.IOHandler := FIOHandleSSL;
     FHttpServer.OnQuerySSLPort := OnQuerySSLPort;
